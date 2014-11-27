@@ -15,68 +15,133 @@
 			<div class="slides">
 				<section>
 					<h2>Mocks and how to avoid them</h2>
+					<p>(high-speed!)</p>
 				</section>
 				<section>
 					<h2>Why are we here?</h2>
 					<p>
 						<ul>
-							<li>mocking is usually awful, let's understand why</li>
-							<li>there are often better alternatives, so let's learn about them</li>
-							<li>mocking is helpful sometimes, let's mention some times</li>
+							<li>Mocking is usually awful, let's understand why</li>
+							<li>There are better alternatives, so let's learn about them</li>
+							<li>Mocking is helpful sometimes, let's mention some of those times</li>
 						</ul>
 					</p>
 				</section>
 				<section>
 					<h2>Mocking is awful</h2>
-					<p>code example of horrible mock</p>
+					<pre><code data-trim class="java">
+public void testCreditCardIsCharged() {
+
+    paymentProcessor = new PaymentProcessor(mockCreditCardServer);
+
+    when(mockCreditCardServer.isServerAvailable()).thenReturn(true);
+    when(mockCreditCardServer.beginTransaction()).thenReturn(mockTransactionManager);
+    when(mockTransactionManager.getTransaction()).thenReturn(transaction);
+    when(mockCreditCardServer.pay(transaction, creditCard, 500)).thenReturn(mockPayment);
+    when(mockPayment.isOverMaxBalance()).thenReturn(false);
+
+    paymentProcessor.processPayment(creditCard, Money.dollars(500));
+
+    verify(mockCreditCardServer).pay(transaction, creditCard, 500);
+}
+					</code></pre>
 				</section>
 				<section>
 					<h2>Mock tests are not good value</h2>
-					<p>Cost to write is low, but cost of maintenance tends to be high- mocks are brittle</p>
-					<p>Bugs found and protection against regression is low</p>
-					<p>Mock tests tend to test wiring or coupling rather than something more useful</p>
-					<p>- Wiring bugs are generally caught by integration or acceptance tests</p>
-					<p>- Coupling is an implementation detail that should not be observable</p>
+					<ul>
+						<li>Cost to write is fairly low, but cost of maintenance and poor design is high</li>
+						<li>Bugs found and protection against regression is low</li>
+						<li>Mocks test wiring or coupling rather than something more useful</p>
 				</section>
 				<section>
 					<h2>Mocking at its worst</h2>
-					<p>Everybody agrees that nested mocks, or numerous mocks per test are bad.</p>
+					<p>Everybody agrees that nested mocks or numerous mocks per test are bad.</p>
 					<p>Both imply poor encapsulation in the application code.</p>
 				</section>
 				<section>
 					<h2>How to not mock</h2>
-					<p>Let's talk about some alternatives</p>
+					<p>Let's talk about some alternatives.</p>
 				</section>
 				<section>
-					<h2>Test real input and output</h2>
-					<p>code example of testing data rather than mocks</p>
-					<p>A common justification for mocks here is that it can be hard to write appropriate data builders.</p>
-					<p>However, a small time investment here is worth a great deal longer term, and will probably help in application code and domain modellling too.</p>
+					<h2>Separate effects from calculations</h2>
+					<pre><code data-trim class="java">
+public void publishMessage(InternalMessage message, Session session,
+                           MessagePublisher publisher) {
+
+    publisher.transformAndPublish(message, session);
+}
+					</code></pre>
+					<pre><code data-trim class="java">
+public void publishMessage(InternalMessage message, Session session,
+                           MessageRenderer renderer, MessagePublisher publisher) {
+
+    RenderedMessage toPublish = renderer.transform(message);
+    publisher.publish(message, session);
+}
+					</code></pre>
 				</section>
 				<section>
-					<h2>Functional decomposition</h2>
-					<p>code example of extracting effect as a value</p>
-					<p>code example of undoing tell don't ask</p>
-					<p>Notice that ctor injection is lifted up the class dependency tree.</p>
+					<h2>Separate effects from calculations</h2>
+					<pre><code data-trim class="java">
+public Order acceptInstruction(Instruction instruction, Account account,
+                               PaymentProcessor processor) {
+
+    if(account.canAfford(instruction.value())) {
+        processor.debit(account.id(), instruction.value());
+        return Order.buildFrom(instruction);
+    }
+    return null;
+}
+					</code></pre>
+					<pre><code data-trim class="java">
+public Pair&lt;Order, Charge&gt; acceptInstruction(Instruction instruction, Account account) {
+
+    if(account.canAfford(instruction.value())) {
+        Charge debit = new Charge(account.id(), instruction.value());
+        Order order = Order.buildFrom(instruction);
+        return Pair.of(order, debit);
+    }
+    return null;
+}
+					</code></pre>
 				</section>
 				<section>
 					<h2>Test at an appropriate level</h2>
-					<p>A Unit doesn't mean a class.</p>
+					<p>A unit doesn't necessarily mean a class.</p>
 					<p>If several classes are tightly coupled, it's OK to unit test them together.</p>
-					<p>Otherwise, organise their interactions so as to minimise 'glue' code.</p>
-					<p>Unit test them separately.</p>
+					<p>Reduce coupling by exposing effects in the interface between units.</p>
 					<p>Test the glue at integration or acceptance level.</p>
-					<p>Much better return on investment in the longer term.</p>
 				</section>
 				<section>
 					<h2>When to mock</h2>
-					<p>If you have an interaction that you can't factor out yet</p>
-					<p>code example of 2-dimension-configurable data transformer?</p>
+					<p>Mocking is great if you are testing an interaction which is genuinely an effect, at the edge of your component.</p>
+					<pre><code data-trim class="java">
+public void deliverMessage(Message message, Route route) {
+    if(route.accept(message)) {
+        auditLog.auditDeliverySuccess(message.id());
+    }
+    else {
+        auditLog.auditDeliveryFailure(message.id());
+    }
+}
+					</code></pre>
+					<p>Also, mock tests are generally better than no tests, so when you perform an appropriate refactoring, keep on mocking.</p>
 				</section>
 				<section>
-					<h2>When to mock</h2>
-					<p>If you have an interaction which is genuinely an effect, from the pov of your component (not just your unit)</p>
-					<p>code example of effect</p>
+					<h2>Summary</h2>
+					<ul>
+						<li>factor your code to separate calculations and effects</li>
+						<li>define what counts as an effect by looking at component boundaries</li>
+						<li>use mock tests for effects</li>
+						<li>use input/output tests for calculations</li>
+						<li>appropriate units can sometimes be bigger than a single class</li>
+						<li>test glue code logic at integration or acceptance level</li>
+					</ul>
+				</section>
+				<section>
+					<p>Mocks, by their very nature, are coupled to mechanisms instead of outcomes. Mocks, or the setup code that builds them, have deep knowledge of the inner workings of several different classes.</p>
+					<p>That knowledge is the very definition of high-coupling.</p>
+					<p>- Bob Martin</p>
 				</section>
 			</div>
 		</div>
@@ -91,7 +156,7 @@
 				history: true,
 				center: true,
 				
-				width: 1152,
+				width: 1200,
 
 				theme: 'moon',
 				transition: 'none',
