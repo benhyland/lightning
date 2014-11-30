@@ -51,12 +51,9 @@ public void testCreditCardIsCharged() {
 					<ul>
 						<li>Cost to write is fairly low, but cost of maintenance and poor design is high</li>
 						<li>Bugs found and protection against regression is low</li>
-						<li>Mocks test wiring or coupling rather than something more useful</p>
-				</section>
-				<section>
-					<h2>Mocking at its worst</h2>
-					<p>Everybody agrees that nested mocks or numerous mocks per test are bad.</p>
-					<p>Both imply poor encapsulation in the application code.</p>
+						<li>Mocks test wiring or coupling rather than something more useful</li>
+						<li>Mocking input data increases fragility and discourages writing humane apis</li>
+					</ul>
 				</section>
 				<section>
 					<h2>How to not mock</h2>
@@ -109,12 +106,13 @@ public Pair&lt;Order, Charge&gt; acceptInstruction(Instruction instruction, Acco
 					<h2>Test at an appropriate level</h2>
 					<p>A unit doesn't necessarily mean a class.</p>
 					<p>If several classes are tightly coupled, it's OK to unit test them together.</p>
+					<p>If a class packages several independent functions, it's OK to test them separately.</p>
 					<p>Reduce coupling by exposing effects in the interface between units.</p>
 					<p>Test the glue at integration or acceptance level.</p>
 				</section>
 				<section>
 					<h2>When to mock</h2>
-					<p>Mocking is great if you are testing an interaction which is genuinely an effect, at the edge of your component.</p>
+					<p>Mocking is appropriate if you are testing an interaction which is genuinely an effect, at the edge of your component.</p>
 					<pre><code data-trim class="java">
 public void deliverMessage(Message message, Route route) {
     if(route.accept(message)) {
@@ -125,7 +123,7 @@ public void deliverMessage(Message message, Route route) {
     }
 }
 					</code></pre>
-					<p>Also, mock tests are generally better than no tests, so when you perform an appropriate refactoring, keep on mocking.</p>
+					<p>Mock tests can sometimes be preferable to no tests, especially in legacy code while you aren't sure of all the requirements for a particular program.</p>
 				</section>
 				<section>
 					<h2>Summary</h2>
@@ -133,7 +131,7 @@ public void deliverMessage(Message message, Route route) {
 						<li>factor your code to separate calculations and effects</li>
 						<li>define what counts as an effect by looking at component boundaries</li>
 						<li>use mock tests for effects</li>
-						<li>use input/output tests for calculations</li>
+						<li>use input/output tests for calculations, and avoid mocking input data</li>
 						<li>appropriate units can sometimes be bigger than a single class</li>
 						<li>test glue code logic at integration or acceptance level</li>
 					</ul>
