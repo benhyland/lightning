@@ -69,7 +69,7 @@ public void publishMessage(InternalMessage message, Session session,
                            MessageRenderer renderer, MessagePublisher publisher) {
 
     RenderedMessage toPublish = renderer.transform(message);
-    publisher.publish(message, session);
+    publisher.publish(toPublish, session);
 }
 					</code></pre>
 				</section>
