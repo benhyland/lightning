@@ -56,10 +56,6 @@ public void testCreditCardIsCharged() {
 					</ul>
 				</section>
 				<section>
-					<h2>How to not mock</h2>
-					<p>Let's talk about some alternatives.</p>
-				</section>
-				<section>
 					<h2>Separate effects from calculations</h2>
 					<pre><code data-trim class="java">
 public void publishMessage(InternalMessage message, Session session,
@@ -106,7 +102,7 @@ public Pair&lt;Order, Charge&gt; acceptInstruction(Instruction instruction, Acco
 					<h2>Test at an appropriate level</h2>
 					<p>A unit doesn't necessarily mean a class.</p>
 					<p>If several classes are tightly coupled, it's OK to unit test them together.</p>
-					<p>If a class packages several independent functions, it's OK to test them separately.</p>
+					<p>If a class packages independent functions, it's OK to test them separately.</p>
 					<p>Reduce coupling by exposing effects in the interface between units.</p>
 					<p>Test the glue at integration or acceptance level.</p>
 				</section>
